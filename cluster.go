@@ -16,13 +16,13 @@ package redis
 
 import (
 	"errors"
-	"log"
 	"fmt"
-	"time"
-	"sync"
-	"strings"
-	"strconv"
+	"log"
 	"math/rand"
+	"strconv"
+	"strings"
+	"sync"
+	"time"
 )
 
 // Options is used to initialize a new redis cluster.
@@ -210,7 +210,7 @@ func (cluster *Cluster) ChooseNodeWithCmd(cmd string, args ...interface{}) (*red
 			if i == 0 {
 				node = curNode
 			} else if node != curNode {
-				return nil, fmt.Errorf("all keys in the mset/msetnx script should be hashed into the same node, " +
+				return nil, fmt.Errorf("all keys in the mset/msetnx script should be hashed into the same node, "+
 					"current key[%v] node[%v] != previous_node[%v]", args[i], curNode.address, node.address)
 			}
 		}
@@ -236,9 +236,9 @@ func (cluster *Cluster) ChooseNodeWithCmd(cmd string, args ...interface{}) (*red
 
 		var slot uint16
 		for i := 0; i < nr; i++ {
-			curSlot, err := GetSlot(args[2 + i])
+			curSlot, err := GetSlot(args[2+i])
 			if err != nil {
-				return nil, fmt.Errorf("get slot of parameter[%v] failed[%v]", args[2 + i], err)
+				return nil, fmt.Errorf("get slot of parameter[%v] failed[%v]", args[2+i], err)
 			}
 
 			if i == 0 {
@@ -274,6 +274,20 @@ func (cluster *Cluster) ChooseNodeWithCmd(cmd string, args ...interface{}) (*red
 	}
 
 	return node, err
+}
+
+func (cluster *Cluster) Update() error {
+	addrList, errList := make([]string, 0), make([]error, 0)
+	for addr, node := range cluster.nodes {
+		err := cluster.update(node)
+		if err != nil {
+			addrList = append(addrList, addr)
+			errList = append(errList, err)
+		} else {
+			return nil
+		}
+	}
+	return fmt.Errorf("cluster update failed: addr in %v, error list: %v", addrList, errList)
 }
 
 func (cluster *Cluster) handleMove(node *redisNode, replyMsg, cmd string, args []interface{}) (interface{}, error) {
