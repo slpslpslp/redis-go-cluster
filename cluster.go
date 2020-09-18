@@ -37,6 +37,7 @@ type Options struct {
 	AliveTime time.Duration // Keep alive timeout
 
 	Password string
+	NoUpdate bool
 }
 
 // Cluster is a redis client that manage connections to redis nodes, 
@@ -102,7 +103,9 @@ func NewCluster(options *Options) (*Cluster, error) {
 			errList = append(errList, fmt.Errorf("node[%v] update failed[%v]", node.address, err))
 			continue
 		} else {
-			go cluster.handleUpdate()
+			if !options.NoUpdate {
+				go cluster.handleUpdate()
+			}
 			return cluster, nil
 		}
 	}
